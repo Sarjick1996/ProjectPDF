@@ -2,25 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Viewer</title>
+  <title>My PDF Library</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f7f7f7;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
       padding: 20px;
     }
     h1 {
-      color: #333;
+      text-align: center;
     }
     .file {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: white;
       border-radius: 10px;
       padding: 15px;
-      margin-bottom: 15px;
+      margin: 10px auto;
+      max-width: 600px;
       display: flex;
       align-items: center;
       gap: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .file img {
       width: 100px;
@@ -31,47 +32,47 @@
 </head>
 <body>
   <h1>My PDF Library</h1>
-  <div id="pdf-list">Loading...</div>
+  <div id="pdf-list">Loading files...</div>
 
   <script>
-    const workerURL = "https://testing.sarjickbhaumik123.workers.dev"; // Your Worker URL
+    const workerURL = "https://testing.sarjickbhaumik123.workers.dev";
 
     async function loadFiles() {
+      const container = document.getElementById("pdf-list");
+
       try {
-        const res = await fetch(workerURL);
-        const data = await res.json();
+        const response = await fetch(workerURL);
+        const files = await response.json();
 
-        const container = document.getElementById("pdf-list");
-        container.innerHTML = "";
-
-        if (data.length === 0) {
+        if (!Array.isArray(files) || files.length === 0) {
           container.textContent = "No PDFs found.";
           return;
         }
 
-        data.forEach(file => {
+        container.innerHTML = "";
+
+        files.forEach(file => {
+          const pdfURL = `${workerURL}/${file.pdf}`;
+          const imgURL = `${workerURL}/${file.image}`;
+
           const div = document.createElement("div");
           div.className = "file";
-
-          const pdfLink = `${workerURL}/${file.pdf}`;
-          const imageLink = `${workerURL}/${file.image}`;
-
           div.innerHTML = `
-            <a href="${pdfLink}" target="_blank">
-              <img src="${imageLink}" alt="${file.pdf}" onerror="this.src='https://via.placeholder.com/100'">
+            <a href="${pdfURL}" target="_blank">
+              <img src="${imgURL}" alt="${file.pdf}" onerror="this.src='https://via.placeholder.com/100'">
             </a>
             <div>
               <p><strong>${file.pdf}</strong></p>
-              <a href="${pdfLink}" target="_blank">View PDF</a>
+              <a href="${pdfURL}" target="_blank">View PDF</a>
             </div>
           `;
 
           container.appendChild(div);
         });
 
-      } catch (err) {
-        console.error("Error loading PDFs:", err);
-        document.getElementById("pdf-list").textContent = "Failed to load files.";
+      } catch (error) {
+        console.error("Error loading files:", error);
+        container.textContent = "Failed to load files.";
       }
     }
 
