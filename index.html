@@ -1,58 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Viewer</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 20px; }
-        .item { text-align: center; width: 200px; }
-        .item img { width: 150px; height: auto; cursor: pointer; border: 1px solid #ccc; padding: 5px; }
-        iframe { width: 80%; height: 500px; margin-top: 20px; display: none; border: 1px solid #ddd; }
-    </style>
+  <title>PDF Viewer</title>
 </head>
 <body>
+  <div id="pdf-list"></div>
 
-    <h1>PDF Gallery</h1>
-    <div id="pdfList" class="container"></div>
-    <iframe id="pdfViewer"></iframe>
+  <script>
+    async function loadPDFs() {
+      const res = await fetch('https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/');
+      const files = await res.json();
 
-    <script>
-        async function loadPDFs() {
-            const response = await fetch('/'); // Call Cloudflare Worker
-            const data = await response.json();
+      const container = document.getElementById('pdf-list');
+      files.forEach(file => {
+        const item = document.createElement('div');
+        item.innerHTML = `
+          <p><strong>${file.pdf}</strong></p>
+          <a href="https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/${file.pdf}" target="_blank">
+            <img src="https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/${file.image}" width="100" />
+          </a>
+        `;
+        container.appendChild(item);
+      });
+    }
 
-            const container = document.getElementById("pdfList");
-            container.innerHTML = "";
-
-            data.forEach(file => {
-                const div = document.createElement("div");
-                div.classList.add("item");
-
-                const img = document.createElement("img");
-                img.src = file.image;
-                img.alt = file.pdf;
-                img.onerror = () => { img.src = "https://via.placeholder.com/150"; }; // Fallback if image missing
-                img.onclick = () => openPDF(file.pdf);
-
-                const caption = document.createElement("p");
-                caption.textContent = file.pdf;
-
-                div.appendChild(img);
-                div.appendChild(caption);
-                container.appendChild(div);
-            });
-        }
-
-        function openPDF(pdfFile) {
-            const viewer = document.getElementById("pdfViewer");
-            viewer.src = `/${pdfFile}`;
-            viewer.style.display = "block";
-        }
-
-        loadPDFs();
-    </script>
-
+    loadPDFs();
+  </script>
 </body>
 </html>
