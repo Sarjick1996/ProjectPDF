@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Library</title>
+  <title>PDF Viewer</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
       background: #f9f9f9;
+      padding: 20px;
     }
     .file {
       background: white;
@@ -21,6 +21,7 @@
     }
     img {
       width: 100px;
+      height: auto;
       border-radius: 5px;
     }
   </style>
@@ -30,7 +31,7 @@
   <div id="pdf-list">Loading...</div>
 
   <script>
-    const workerURL = "https://testing.sarjickbhaumik123.workers.dev/"; // 🔁 Replace with your real Worker URL
+    const workerURL = "https://testing.sarjickbhaumik123.workers.dev"; // your Worker URL
 
     async function loadFiles() {
       try {
@@ -39,10 +40,10 @@
         const files = await res.json();
 
         const container = document.getElementById("pdf-list");
-        container.innerHTML = ""; // Clear "Loading..."
+        container.innerHTML = "";
 
         if (files.length === 0) {
-          container.innerText = "No PDFs found.";
+          container.textContent = "No PDFs found.";
           return;
         }
 
@@ -51,11 +52,11 @@
           item.className = "file";
 
           const link = `${workerURL}/${file.pdf}`;
-          const imgSrc = `${workerURL}/${file.image}`;
+          const img = `${workerURL}/${file.image}`;
 
           item.innerHTML = `
             <a href="${link}" target="_blank">
-              <img src="${imgSrc}" alt="${file.pdf}" onerror="this.src='https://via.placeholder.com/100';">
+              <img src="${img}" alt="${file.pdf}" onerror="this.src='https://via.placeholder.com/100';">
             </a>
             <div>
               <a href="${link}" target="_blank">${file.pdf}</a>
@@ -65,7 +66,7 @@
           container.appendChild(item);
         });
       } catch (err) {
-        document.getElementById("pdf-list").innerText = "Error loading files.";
+        document.getElementById("pdf-list").textContent = "Error loading files.";
         console.error(err);
       }
     }
