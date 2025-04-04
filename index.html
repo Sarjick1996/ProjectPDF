@@ -1,30 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>PDF Viewer</title>
+  <meta charset="UTF-8">
+  <title>PDF Library</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    .file {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    img {
+      width: 100px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <div id="pdf-list"></div>
+  <h1>PDF Library</h1>
+  <div id="pdf-list">Loading...</div>
 
   <script>
-    async function loadPDFs() {
-      const res = await fetch('https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/');
-      const files = await res.json();
+    const workerURL = "https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/edit/testing/production"; // 🔁 Replace with your real Worker URL
 
-      const container = document.getElementById('pdf-list');
-      files.forEach(file => {
-        const item = document.createElement('div');
-        item.innerHTML = `
-          <p><strong>${file.pdf}</strong></p>
-          <a href="https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/${file.pdf}" target="_blank">
-            <img src="https://dash.cloudflare.com/0bfc1c4f060f27d9c737cee23a9061c8/workers/services/view/testing/production/m/${file.image}" width="100" />
-          </a>
-        `;
-        container.appendChild(item);
-      });
+    async function loadFiles() {
+      try {
+        const res = await fetch(workerURL);
+        if (!res.ok) throw new Error("Failed to load list");
+        const files = await res.json();
+
+        const container = document.getElementById("pdf-list");
+        container.innerHTML = ""; // Clear "Loading..."
+
+        if (files.length === 0) {
+          container.innerText = "No PDFs found.";
+          return;
+        }
+
+        files.forEach(file => {
+          const item = document.createElement("div");
+          item.className = "file";
+
+          const link = `${workerURL}/${file.pdf}`;
+          const imgSrc = `${workerURL}/${file.image}`;
+
+          item.innerHTML = `
+            <a href="${link}" target="_blank">
+              <img src="${imgSrc}" alt="${file.pdf}" onerror="this.src='https://via.placeholder.com/100';">
+            </a>
+            <div>
+              <a href="${link}" target="_blank">${file.pdf}</a>
+            </div>
+          `;
+
+          container.appendChild(item);
+        });
+      } catch (err) {
+        document.getElementById("pdf-list").innerText = "Error loading files.";
+        console.error(err);
+      }
     }
 
-    loadPDFs();
+    loadFiles();
   </script>
 </body>
 </html>
