@@ -44,10 +44,10 @@
           div.className = "pdf-item";
 
           div.innerHTML = `
-            <a href="${pdfViewURL}" target="_blank">
+            <a href="${pdfViewURL}">
               <img src="${imgURL}" onerror="this.src='https://via.placeholder.com/100'">
             </a>
-            <a href="${pdfViewURL}" target="_blank">${pdf}</a>
+            <a href="${pdfViewURL}">${pdf}</a>
           `;
 
           container.appendChild(div);
