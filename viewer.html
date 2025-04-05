@@ -6,28 +6,109 @@
   <style>
     body {
       margin: 0;
-      background: #000;
+      font-family: sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    iframe {
-      width: 100vw;
-      height: 100vh;
+    canvas {
+      max-width: 100%;
+      height: auto;
+      margin: 20px 0;
+    }
+    .nav {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #333;
+      color: white;
       border: none;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body oncontextmenu="return false">
-  <iframe id="pdfFrame"></iframe>
+  <div class="nav">
+    <button id="prevBtn">⟵ Prev</button>
+    <span id="pageInfo">Page 1</span>
+    <button id="nextBtn">Next ⟶</button>
+  </div>
+  <canvas id="pdfCanvas"></canvas>
+
+  <!-- PDF.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const file = params.get("file");
+    const urlParams = new URLSearchParams(window.location.search);
+    const file = urlParams.get('file');
+    const fileURL = `https://testing.sarjickbhaumik123.workers.dev/${file}`;
 
-    if (!file) {
-      document.body.innerHTML = "<h2 style='color:white;text-align:center;'>No file specified</h2>";
-    } else {
-      const url = `https://testing.sarjickbhaumik123.workers.dev/${file}#toolbar=0&navpanes=0&scrollbar=0`;
-      document.getElementById("pdfFrame").src = url;
+    let pdfDoc = null;
+    let currentPage = 1;
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    async function loadPDF() {
+      if (!file) {
+        alert("No file specified.");
+        return;
+      }
+
+      pdfDoc = await pdfjsLib.getDocument(fileURL).promise;
+      renderPage(currentPage);
     }
+
+    async function renderPage(num) {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      const renderContext = {
+        canvasContext: ctx,
+        viewport: viewport
+      };
+
+      await page.render(renderContext).promise;
+      pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages}`;
+      prevBtn.disabled = num <= 1;
+      nextBtn.disabled = num >= pdfDoc.numPages;
+    }
+
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPage(currentPage);
+      }
+    };
+
+    nextBtn.onclick = () => {
+      if (currentPage < pdfDoc.numPages) {
+        currentPage++;
+        renderPage(currentPage);
+      }
+    };
+
+    loadPDF();
   </script>
 </body>
 </html>
