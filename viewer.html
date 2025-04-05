@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Viewer</title>
+  <title>PDF Viewer with Thumbnails</title>
   <style>
     body {
       margin: 0;
@@ -41,6 +41,27 @@
     #pageInfo {
       font-size: 16px;
     }
+    #thumbnails {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding: 10px;
+      background: #222;
+      width: 100%;
+      box-sizing: border-box;
+      border-top: 1px solid #444;
+    }
+    .thumb {
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border 0.2s ease;
+    }
+    .thumb.selected {
+      border: 2px solid #0af;
+    }
+    .thumb canvas {
+      height: 100px;
+    }
   </style>
 </head>
 <body oncontextmenu="return false">
@@ -49,7 +70,10 @@
     <span id="pageInfo">Page 1</span>
     <button id="nextBtn">Next ⟶</button>
   </div>
+
   <canvas id="pdfCanvas"></canvas>
+
+  <div id="thumbnails"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
@@ -64,6 +88,7 @@
     const pageInfo = document.getElementById('pageInfo');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const thumbnails = document.getElementById('thumbnails');
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -74,7 +99,9 @@
       }
 
       pdfDoc = await pdfjsLib.getDocument(fileURL).promise;
-      renderPage(currentPage);
+
+      await renderPage(currentPage);
+      await generateThumbnails();
     }
 
     async function renderPage(num) {
@@ -93,6 +120,45 @@
       pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages}`;
       prevBtn.disabled = num <= 1;
       nextBtn.disabled = num >= pdfDoc.numPages;
+
+      highlightThumbnail(num);
+    }
+
+    async function generateThumbnails() {
+      thumbnails.innerHTML = '';
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const thumbCanvas = document.createElement('canvas');
+        const thumbCtx = thumbCanvas.getContext('2d');
+        const div = document.createElement('div');
+        div.className = 'thumb';
+        div.dataset.page = i;
+        div.appendChild(thumbCanvas);
+        thumbnails.appendChild(div);
+
+        const page = await pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 0.3 });
+        thumbCanvas.width = viewport.width;
+        thumbCanvas.height = viewport.height;
+
+        await page.render({
+          canvasContext: thumbCtx,
+          viewport: viewport
+        }).promise;
+
+        div.onclick = () => {
+          currentPage = i;
+          renderPage(currentPage);
+        };
+      }
+    }
+
+    function highlightThumbnail(pageNum) {
+      document.querySelectorAll('.thumb').forEach(div => {
+        div.classList.remove('selected');
+        if (parseInt(div.dataset.page) === pageNum) {
+          div.classList.add('selected');
+        }
+      });
     }
 
     prevBtn.onclick = () => {
