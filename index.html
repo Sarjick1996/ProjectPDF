@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PDF Viewer</title>
+  <title>PDF Gallery</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -130,15 +130,22 @@
     const pageInfo = document.getElementById("pageInfo");
     const categoryButtons = document.getElementById("category-buttons");
 
-    async function fetchPDFs() {
-      const res = await fetch(workerURL + (currentCategory ? `?category=${currentCategory}` : ""));
+    async function fetchPDFs(category = "") {
+      const url = new URL(workerURL);
+      if (category) url.searchParams.set("category", category);
+
+      const res = await fetch(url);
       const data = await res.json();
-      allPDFs = data.files || data;
-      if (!currentCategory) {
+
+      if (!category) {
         categories = data.categories || [];
-        allPDFs = allPDFs.sort(() => 0.5 - Math.random());
         renderCategoryButtons();
+        allPDFs = data.files || [];
+      } else {
+        allPDFs = data.files || [];
       }
+
+      currentPage = 1;
       renderPage();
     }
 
@@ -164,8 +171,7 @@
           document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
           currentCategory = btn.dataset.category;
-          currentPage = 1;
-          fetchPDFs();
+          fetchPDFs(currentCategory);
         });
       });
     }
@@ -187,7 +193,7 @@
           <a href="${pdfViewURL}">
             <img src="${imgURL}" onerror="this.src='https://via.placeholder.com/150x200'">
           </a>
-          <div><a href="${pdfViewURL}">${pdf}</a></div>
+          <div><a href="${pdfViewURL}">${pdf.split('/').pop()}</a></div>
         `;
         pdfList.appendChild(div);
       });
