@@ -37,17 +37,17 @@
         container.innerHTML = "";
 
         data.forEach(({ pdf, image }) => {
-          const pdfViewURL = `viewer.html?file=${encodeURIComponent(pdf)}`;
+          const pdfURL = workerURL + pdf;
           const imgURL = image ? workerURL + image : "https://via.placeholder.com/100";
 
           const div = document.createElement("div");
           div.className = "pdf-item";
 
           div.innerHTML = `
-            <a href="${pdfViewURL}" target="_blank">
+            <a href="${pdfURL}" target="_blank">
               <img src="${imgURL}" onerror="this.src='https://via.placeholder.com/100'">
             </a>
-            <a href="${pdfViewURL}" target="_blank">${pdf}</a>
+            <a href="${pdfURL}" target="_blank">${pdf}</a>
           `;
 
           container.appendChild(div);

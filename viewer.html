@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+    }
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+    }
+  </style>
+</head>
+<body oncontextmenu="return false">
+  <iframe id="pdfFrame"></iframe>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get("file");
+
+    if (!file) {
+      document.body.innerHTML = "<h2 style='color:white;text-align:center;'>No file specified</h2>";
+    } else {
+      const url = `https://testing.sarjickbhaumik123.workers.dev/${file}#toolbar=0&navpanes=0&scrollbar=0`;
+      document.getElementById("pdfFrame").src = url;
+    }
+  </script>
+</body>
+</html>
