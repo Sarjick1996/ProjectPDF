@@ -2,144 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PDF Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Viewer</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 1rem;
+      font-family: Arial, sans-serif;
+      padding: 10px;
       background: #f2f2f2;
     }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
     .categories {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-bottom: 2rem;
+      margin-bottom: 20px;
+      gap: 10px;
     }
-
-    .categories button {
-      padding: 0.5rem 1rem;
+    .category-btn {
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      padding: 8px 14px;
+      border-radius: 6px;
       cursor: pointer;
     }
-
-    .categories button.active {
+    .category-btn.active {
       background: #0056b3;
     }
-
     .grid {
       display: grid;
-      gap: 1rem;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
     }
-
-    /* Desktop: 4 columns x 2 rows */
-    @media (min-width: 768px) {
-      .grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    /* Mobile: 2 columns x 4 rows */
-    @media (max-width: 767px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      body {
-        font-family: "Arial", sans-serif;
-      }
-    }
-
     .card {
       background: white;
-      padding: 0.5rem;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       text-align: center;
     }
-
     .card img {
       width: 100%;
       height: 200px;
       object-fit: cover;
       border-radius: 6px;
     }
-
     .card a {
+      display: inline-block;
+      margin-top: 8px;
+      color: #007bff;
       text-decoration: none;
-      display: block;
-      margin-top: 0.5rem;
       font-weight: bold;
-      color: #333;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      body {
+        font-family: 'Comic Sans MS', cursive;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>PDF Gallery</h1>
+
+  <h1>📚 PDF Library</h1>
 
   <div class="categories" id="categoryButtons"></div>
-  <div class="grid" id="pdfContainer"></div>
+
+  <div class="grid" id="pdfGrid"></div>
 
   <script>
-    const workerUrl = "https://testing.sarjickbhaumik123.workers.dev/";
-    const container = document.getElementById("pdfContainer");
-    const categoryButtons = document.getElementById("categoryButtons");
+    const apiUrl = "https://testing.sarjickbhaumik123.workers.dev/";
 
-    let allData = [];
-    let currentCategory = "all";
+    let allFiles = [];
+    let baseUrl = "";
+    let activeCategory = "all";
 
-    async function loadData(category = null) {
-      const url = category ? `${workerUrl}?category=${category}` : workerUrl;
-      const res = await fetch(url);
-      const data = await res.json();
-      allData = data;
-      renderButtons(data.categories);
-      renderFiles(data.files);
+    async function fetchData(category = "") {
+      try {
+        const res = await fetch(category ? `${apiUrl}?category=${category}` : apiUrl);
+        const data = await res.json();
+        baseUrl = data.baseUrl;
+        if (!category) {
+          allFiles = data.files;
+          createCategoryButtons(data.categories);
+        }
+        renderGrid(category ? data.files : allFiles);
+      } catch (err) {
+        document.getElementById("pdfGrid").innerHTML = "<p>❌ Error loading data</p>";
+        console.error("Fetch error:", err);
+      }
     }
 
-    function renderButtons(categories) {
-      categoryButtons.innerHTML = "";
+    function createCategoryButtons(categories) {
+      const container = document.getElementById("categoryButtons");
+      container.innerHTML = "";
 
       const allBtn = document.createElement("button");
+      allBtn.className = "category-btn active";
       allBtn.textContent = "All";
-      allBtn.className = currentCategory === "all" ? "active" : "";
       allBtn.onclick = () => {
-        currentCategory = "all";
-        renderFiles(allData.files);
-        renderButtons(allData.categories);
+        activeCategory = "all";
+        updateActiveBtn();
+        renderGrid(allFiles);
       };
-      categoryButtons.appendChild(allBtn);
+      container.appendChild(allBtn);
 
       categories.forEach(cat => {
         const btn = document.createElement("button");
+        btn.className = "category-btn";
         btn.textContent = cat;
-        btn.className = currentCategory === cat ? "active" : "";
-        btn.onclick = async () => {
-          currentCategory = cat;
-          const res = await fetch(`${workerUrl}?category=${cat}`);
-          const data = await res.json();
-          renderFiles(data.files);
-          renderButtons(data.categories);
+        btn.onclick = () => {
+          activeCategory = cat;
+          updateActiveBtn();
+          fetchData(cat);
         };
-        categoryButtons.appendChild(btn);
+        container.appendChild(btn);
       });
     }
 
-    function renderFiles(files) {
-      container.innerHTML = "";
+    function updateActiveBtn() {
+      document.querySelectorAll(".category-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.textContent === activeCategory || (activeCategory === "all" && btn.textContent === "All"));
+      });
+    }
+
+    function renderGrid(files) {
+      const grid = document.getElementById("pdfGrid");
+      grid.innerHTML = "";
+
       if (!files.length) {
-        container.innerHTML = "<p>No files available.</p>";
+        grid.innerHTML = "<p>No PDFs found in this category.</p>";
         return;
       }
 
@@ -148,21 +140,24 @@
         card.className = "card";
 
         const img = document.createElement("img");
-        img.src = `https://<your-r2-public-url>/${file.image}`;
+        img.src = `${baseUrl}/${file.image}`;
         img.alt = "Preview";
+        img.onerror = () => {
+          img.src = "https://via.placeholder.com/300x200?text=No+Image";
+        };
 
         const link = document.createElement("a");
-        link.href = `https://<your-r2-public-url>/${file.pdf}`;
+        link.href = `${baseUrl}/${file.pdf}`;
+        link.textContent = "View PDF";
         link.target = "_blank";
-        link.textContent = file.pdf.split("/").pop();
 
         card.appendChild(img);
         card.appendChild(link);
-        container.appendChild(card);
+        grid.appendChild(card);
       });
     }
 
-    loadData();
+    fetchData();
   </script>
 </body>
 </html>
